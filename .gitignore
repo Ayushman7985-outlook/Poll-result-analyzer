@@ -1,20 +1,25 @@
+
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Python cache
 __pycache__/
-.pytest_cache/
 *.py[cod]
+.pytest_cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
 .streamlit/secrets.toml
+
+# Editors and operating systems
+.vscode/
+.idea/
 .DS_Store
-.venv/
-venv/
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.streamlit/secrets.toml
-.env
-.venv/
-venv/
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.streamlit/secrets.toml
-.env
+Thumbs.db
+
+# Logs
+*.log
