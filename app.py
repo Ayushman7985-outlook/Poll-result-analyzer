@@ -5,119 +5,270 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-
-# --------------------------------------------------
+# =========================================================
 # PAGE CONFIGURATION
-# --------------------------------------------------
+# =========================================================
 st.set_page_config(
-    page_title="AeroInsight | Airline Safety",
-    page_icon="✈️",
+    page_title="PollInsights | Analytics Studio",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+BASE_DIR = Path(__file__).parent
+DATA_PATH = BASE_DIR / "data" / "poll_responses.csv"
 
-# --------------------------------------------------
-# PROFESSIONAL THEME
-# --------------------------------------------------
+COLORS = [
+    "#3977D5",
+    "#13A89E",
+    "#E9A23B",
+    "#D95757",
+    "#8067C7",
+    "#48A6D9",
+    "#E17AA5",
+    "#7D9B76",
+]
+
+# =========================================================
+# CUSTOM DESIGN
+# =========================================================
 st.markdown(
     """
     <style>
-    :root {
-        --navy: #142B4A;
-        --blue: #3977D5;
-        --teal: #13A89E;
-        --background: #F5F7FB;
-        --text: #23344D;
-        --muted: #718096;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
     }
 
     .stApp {
-        background-color: var(--background);
-        color: var(--text);
+        background: #F4F7FB;
     }
 
-    [data-testid="stHeader"] {
-        background-color: rgba(245, 247, 251, 0.95);
+    .block-container {
+        padding-top: 1.7rem;
+        padding-bottom: 2rem;
+        max-width: 1600px;
     }
 
+    /* LEFT NAVIGATION */
     [data-testid="stSidebar"] {
-        background-color: #142B4A;
-        border-right: 1px solid #233E60;
+        background: #142B4A;
+        border-right: 1px solid #284563;
+    }
+
+    [data-testid="stSidebar"] > div {
+        padding-top: 1.1rem;
     }
 
     [data-testid="stSidebar"] * {
-        color: #F4F7FC;
+        color: #F2F6FC;
     }
 
-    [data-testid="stSidebar"] [data-testid="stRadio"] label {
-        padding: 9px 10px;
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
+        color: #D4DFEE;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stRadio"] > label {
+        color: #91A9C5;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-bottom: 9px;
+    }
+
+    [data-testid="stSidebar"] div[role="radiogroup"] {
+        gap: 7px;
+    }
+
+    [data-testid="stSidebar"] div[role="radiogroup"] > label {
+        background: #1B385B;
+        border: 1px solid #29496D;
+        border-radius: 10px;
+        padding: 12px 10px;
+        margin: 0;
+        transition: background 0.2s ease;
+    }
+
+    [data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
+        background: #2B4E74;
+        border-color: #6488B0;
+    }
+
+    [data-testid="stSidebar"] div[role="radiogroup"] > label p {
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stExpander"] {
+        border: 1px solid #34516F;
+        border-radius: 10px;
+        background: #1B385B;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    [data-testid="stSidebar"] input,
+    [data-testid="stSidebar"] [data-baseweb="select"] {
         border-radius: 8px;
     }
 
-    .brand {
-        font-size: 25px;
+    .brand-wrap {
+        padding: 10px 2px 23px 2px;
+    }
+
+    .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+    }
+
+    .brand-icon {
+        width: 43px;
+        height: 43px;
+        border-radius: 12px;
+        background: #3977D5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 23px;
         font-weight: 800;
-        letter-spacing: -0.7px;
+        flex-shrink: 0;
+    }
+
+    .brand-name {
+        font-size: 20px;
+        font-weight: 800;
         color: #FFFFFF;
-        margin: 5px 0 2px 0;
+        letter-spacing: -0.7px;
     }
 
     .brand-subtitle {
-        color: #B9C9DF;
-        font-size: 12px;
-        margin-bottom: 24px;
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        color: #AFC3DC;
+        margin-top: 4px;
     }
 
-    .page-title {
-        font-size: clamp(25px, 3vw, 34px);
+    .nav-label {
+        font-size: 10px;
+        color: #91A9C5;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        margin: 7px 0 12px 3px;
+    }
+
+    .sidebar-divider {
+        height: 1px;
+        background: #34516F;
+        margin: 20px 0;
+    }
+
+    .sidebar-note {
+        margin-top: 22px;
+        padding: 13px;
+        border: 1px solid #34516F;
+        background: #1B385B;
+        border-radius: 11px;
+    }
+
+    .sidebar-note-title {
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .sidebar-note-text {
+        color: #B8CBE2;
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    /* PAGE HEADER */
+    .page-header {
+        background: linear-gradient(115deg, #142B4A, #28578A);
+        padding: 26px 28px;
+        border-radius: 16px;
+        color: white;
+        margin-bottom: 22px;
+        box-shadow: 0 7px 20px rgba(20, 43, 74, 0.08);
+    }
+
+    .page-header h1 {
+        color: white;
+        font-size: 28px;
+        margin: 0 0 8px 0;
         font-weight: 800;
         letter-spacing: -0.8px;
-        color: #142B4A;
-        margin-bottom: 4px;
     }
 
-    .page-description {
-        color: #718096;
-        font-size: 14px;
-        margin-bottom: 22px;
+    .page-header p {
+        color: #DCE8F6;
+        font-size: 13px;
+        margin: 0;
+        line-height: 1.7;
     }
 
     .section-heading {
         font-size: 18px;
         font-weight: 700;
-        color: #142B4A;
-        margin: 8px 0 12px 0;
+        color: #193453;
+        margin: 22px 0 13px 0;
     }
 
-    div[data-testid="stMetric"] {
-        background: #FFFFFF;
-        border: 1px solid #E4EAF2;
+    .section-caption {
+        color: #7D8BA0;
+        font-size: 12px;
+        margin-top: -7px;
+        margin-bottom: 14px;
+    }
+
+    /* KPI CARDS */
+    .metric-card {
+        background: white;
+        padding: 19px;
         border-radius: 13px;
-        padding: 17px 18px;
-        min-height: 112px;
-        box-shadow: 0 3px 12px rgba(20, 43, 74, 0.035);
+        border: 1px solid #E4EAF2;
+        min-height: 116px;
+        box-shadow: 0 3px 12px rgba(27, 52, 84, 0.035);
         overflow-wrap: anywhere;
     }
 
-    div[data-testid="stMetricLabel"] {
-        color: #718096;
-        font-size: 13px;
+    .metric-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #758399;
+        margin-bottom: 11px;
     }
 
-    div[data-testid="stMetricValue"] {
-        color: #142B4A;
-        font-size: clamp(20px, 2vw, 29px);
-        font-weight: 750;
-        white-space: normal;
+    .metric-value {
+        font-size: 26px;
+        font-weight: 800;
+        color: #193453;
+        line-height: 1.25;
         overflow-wrap: anywhere;
     }
 
+    .metric-note {
+        font-size: 10px;
+        color: #8793A5;
+        margin-top: 8px;
+        line-height: 1.5;
+    }
+
+    /* CHARTS AND TABLES */
     div[data-testid="stPlotlyChart"] {
-        background: #FFFFFF;
+        background: white;
         border: 1px solid #E4EAF2;
         border-radius: 13px;
-        padding: 8px;
+        padding: 5px;
+        margin-bottom: 12px;
         overflow: hidden;
     }
 
@@ -127,39 +278,47 @@ st.markdown(
         overflow: hidden;
     }
 
-    .info-note {
-        background: #EAF1FC;
-        border-left: 4px solid #3977D5;
-        padding: 12px 15px;
-        border-radius: 6px;
-        color: #23344D;
-        font-size: 13px;
-        margin: 10px 0 18px 0;
+    div[data-testid="stMetric"] {
+        background: white;
+        border: 1px solid #E4EAF2;
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .info-panel {
+        background: white;
+        border: 1px solid #E4EAF2;
+        border-radius: 12px;
+        padding: 16px;
+        margin: 8px 0 16px 0;
     }
 
     .footer {
-        color: #718096;
-        font-size: 12px;
         text-align: center;
-        padding: 25px 0 10px 0;
-    }
-
-    #MainMenu, footer {
-        visibility: hidden;
+        color: #8290A3;
+        font-size: 11px;
+        padding: 28px 0 8px 0;
     }
 
     @media (max-width: 700px) {
-        .page-title {
-            font-size: 25px;
+        .block-container {
+            padding: 1rem 0.8rem;
         }
 
-        div[data-testid="stMetric"] {
-            padding: 12px;
-            min-height: 95px;
+        .page-header {
+            padding: 20px;
         }
 
-        div[data-testid="stPlotlyChart"] {
-            padding: 2px;
+        .page-header h1 {
+            font-size: 23px;
+        }
+
+        .metric-card {
+            padding: 14px;
+        }
+
+        .metric-value {
+            font-size: 21px;
         }
     }
     </style>
@@ -167,113 +326,281 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
-# --------------------------------------------------
-# CONSTANTS AND DATA
-# --------------------------------------------------
-DATA_PATH = Path(__file__).parent / "data" / "airline-safety.csv"
-
-REQUIRED_COLUMNS = [
-    "airline",
-    "avail_seat_km_per_week",
-    "incidents_85_99",
-    "fatal_accidents_85_99",
-    "fatalities_85_99",
-    "incidents_00_14",
-    "fatal_accidents_00_14",
-    "fatalities_00_14",
-]
-
-METRICS = {
-    "Incidents": ("incidents_85_99", "incidents_00_14"),
-    "Fatal accidents": (
-        "fatal_accidents_85_99",
-        "fatal_accidents_00_14",
-    ),
-    "Fatalities": ("fatalities_85_99", "fatalities_00_14"),
-}
-
-COLORS = {
-    "navy": "#142B4A",
-    "blue": "#3977D5",
-    "teal": "#13A89E",
-    "amber": "#E9A23B",
-    "red": "#D95757",
-    "grey": "#93A4BA",
-}
-
-
+# =========================================================
+# LOAD DATA
+# =========================================================
 @st.cache_data
-def load_data():
-    if not DATA_PATH.exists():
-        raise FileNotFoundError(
-            f"Dataset not found at: {DATA_PATH}"
-        )
+def load_data(file_path, modified_time):
+    data = pd.read_csv(file_path)
 
-    data = pd.read_csv(DATA_PATH)
-
-    missing = [c for c in REQUIRED_COLUMNS if c not in data.columns]
-    if missing:
-        raise ValueError(
-            "The dataset is missing these columns: "
-            + ", ".join(missing)
-        )
-
-    data = data[REQUIRED_COLUMNS].copy()
-    data["airline"] = data["airline"].astype(str).str.strip()
-
-    numeric_columns = [
-        c for c in REQUIRED_COLUMNS if c != "airline"
+    required_columns = [
+        "Respondent ID",
+        "Timestamp",
+        "Question",
+        "Option",
+        "Region",
+        "Age Group",
     ]
 
-    for column in numeric_columns:
-        data[column] = pd.to_numeric(
-            data[column], errors="coerce"
+    missing = [
+        column for column in required_columns
+        if column not in data.columns
+    ]
+
+    if missing:
+        raise ValueError(
+            "Required columns missing: " + ", ".join(missing)
         )
 
-    data = data.dropna(subset=["airline"])
-    data = data[data["airline"] != ""]
+    data["Timestamp"] = pd.to_datetime(
+        data["Timestamp"], errors="coerce"
+    )
+
+    for column in ["Question", "Option", "Region", "Age Group"]:
+        data[column] = (
+            data[column]
+            .fillna("Unknown")
+            .astype(str)
+            .str.strip()
+            .replace("", "Unknown")
+        )
+
+    data["Respondent ID"] = (
+        data["Respondent ID"].fillna("Unknown").astype(str)
+    )
 
     return data
 
 
-try:
-    df = load_data()
-except Exception as error:
-    st.error(f"Unable to load the dataset: {error}")
-    st.info(
-        "Check that data/airline-safety.csv exists "
-        "and contains the expected columns."
-    )
+if not DATA_PATH.exists():
+    st.error(f"Poll dataset not found: {DATA_PATH}")
+    st.info("Check that data/poll_responses.csv exists.")
     st.stop()
 
+try:
+    df = load_data(
+        str(DATA_PATH),
+        DATA_PATH.stat().st_mtime,
+    )
+except Exception as exc:
+    st.error(f"Unable to load the poll data: {exc}")
+    st.stop()
 
-# --------------------------------------------------
-# HELPER FUNCTIONS
-# --------------------------------------------------
-def format_number(value):
-    return f"{value:,.0f}"
+if df.empty:
+    st.warning("The poll dataset is empty.")
+    st.stop()
+
+# =========================================================
+# SIDEBAR: BRAND, NAVIGATION, FILTERS
+# =========================================================
+with st.sidebar:
+    st.markdown(
+        """
+        <div class="brand-wrap">
+            <div class="brand-row">
+                <div class="brand-icon">◈</div>
+                <div>
+                    <div class="brand-name">PollInsights</div>
+                    <div class="brand-subtitle">ANALYTICS STUDIO</div>
+                </div>
+            </div>
+        </div>
+        <div class="nav-label">MAIN MENU</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    page = st.radio(
+        "Navigation",
+        [
+            "🏠  Overview",
+            "📊  Poll Results",
+            "🌍  Audience Insights",
+            "📈  Trends",
+            "🗃️  Raw Data",
+        ],
+        label_visibility="collapsed",
+        key="page_navigation",
+    )
+
+    st.markdown(
+        """
+        <div class="sidebar-divider"></div>
+        <div class="nav-label">CUSTOMIZE YOUR VIEW</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("⚙️  Response filters", expanded=True):
+        all_questions = sorted(df["Question"].unique().tolist())
+
+        selected_questions = st.multiselect(
+            "Poll questions",
+            options=all_questions,
+            default=all_questions,
+            key="filter_questions",
+        )
+
+        option_source = df[
+            df["Question"].isin(selected_questions)
+        ]
+
+        all_options = sorted(option_source["Option"].unique().tolist())
+
+        selected_options = st.multiselect(
+            "Answer options",
+            options=all_options,
+            default=all_options,
+            key="filter_options",
+        )
+
+        all_regions = sorted(df["Region"].unique().tolist())
+
+        selected_regions = st.multiselect(
+            "Regions",
+            options=all_regions,
+            default=all_regions,
+            key="filter_regions",
+        )
+
+        all_ages = sorted(df["Age Group"].unique().tolist())
+
+        selected_ages = st.multiselect(
+            "Age groups",
+            options=all_ages,
+            default=all_ages,
+            key="filter_ages",
+        )
+
+        if df["Timestamp"].notna().any():
+            min_date = df["Timestamp"].min().date()
+            max_date = df["Timestamp"].max().date()
+
+            date_range = st.date_input(
+                "Response dates",
+                value=(min_date, max_date),
+                min_value=min_date,
+                max_value=max_date,
+                key="filter_dates",
+            )
+        else:
+            date_range = None
+
+        st.caption("Filters apply across all dashboard pages.")
+
+        if st.button(
+            "↻  Reset filters",
+            use_container_width=True,
+            key="reset_filters",
+        ):
+            for key in [
+                "filter_questions",
+                "filter_options",
+                "filter_regions",
+                "filter_ages",
+                "filter_dates",
+            ]:
+                st.session_state.pop(key, None)
+
+            st.rerun()
+
+    st.markdown(
+        """
+        <div class="sidebar-note">
+            <div class="sidebar-note-title">📊 Your workspace</div>
+            <div class="sidebar-note-text">
+                Analyze preferences, explore audiences,
+                discover trends and export poll responses.
+            </div>
+        </div>
+        <div style="
+            color:#91A9C5;
+            font-size:10px;
+            text-align:center;
+            padding:22px 0 5px 0;
+        ">POLLINSIGHTS · V1.0</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# =========================================================
+# FILTER DATA
+# =========================================================
+filtered = df[
+    df["Question"].isin(selected_questions)
+    & df["Option"].isin(selected_options)
+    & df["Region"].isin(selected_regions)
+    & df["Age Group"].isin(selected_ages)
+].copy()
+
+if date_range is not None:
+    if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
+        start_date, end_date = date_range
+
+        valid_dates = filtered["Timestamp"].notna()
+
+        filtered = filtered[
+            ~valid_dates
+            | filtered["Timestamp"].dt.date.between(
+                start_date, end_date
+            )
+        ]
+
+# =========================================================
+# REUSABLE FUNCTIONS
+# =========================================================
+def render_header(title, subtitle):
+    st.markdown(
+        f"""
+        <div class="page-header">
+            <h1>{title}</h1>
+            <p>{subtitle}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
-def get_metric_column(metric, period):
-    index = 0 if period == "1985–1999" else 1
-    return METRICS[metric][index]
+def render_section(title, caption=None):
+    st.markdown(
+        f'<div class="section-heading">{title}</div>',
+        unsafe_allow_html=True,
+    )
+
+    if caption:
+        st.markdown(
+            f'<div class="section-caption">{caption}</div>',
+            unsafe_allow_html=True,
+        )
 
 
-def style_chart(fig, height=360):
+def render_card(label, value, note):
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+            <div class="metric-note">{note}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def prepare_chart(fig, height=360):
     fig.update_layout(
         height=height,
         autosize=True,
+        margin=dict(l=18, r=18, t=62, b=22),
         paper_bgcolor="white",
         plot_bgcolor="white",
         font=dict(
-            family="Arial, sans-serif",
-            color=COLORS["navy"],
+            family="Inter, sans-serif",
+            color="#34465E",
             size=12,
         ),
-        margin=dict(l=18, r=18, t=48, b=25),
         title=dict(
-            font=dict(size=16, color=COLORS["navy"]),
+            font=dict(size=15, color="#193453"),
             x=0.03,
             xanchor="left",
         ),
@@ -284,536 +611,645 @@ def style_chart(fig, height=360):
             xanchor="left",
             x=0,
         ),
-        hoverlabel=dict(
-            bgcolor="white",
-            font_size=12,
-        ),
     )
 
     fig.update_xaxes(
         showgrid=False,
-        zeroline=False,
         automargin=True,
+        title_font=dict(size=11),
     )
 
     fig.update_yaxes(
-        gridcolor="#EDF1F7",
-        zeroline=False,
+        gridcolor="#EDF1F6",
         automargin=True,
+        title_font=dict(size=11),
     )
 
     return fig
 
 
-def show_header(title, description):
-    st.markdown(
-        f'<div class="page-title">{title}</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f'<div class="page-description">{description}</div>',
-        unsafe_allow_html=True,
+def get_option_counts(data):
+    return (
+        data.groupby("Option", as_index=False)
+        .agg(Votes=("Respondent ID", "count"))
+        .sort_values("Votes", ascending=False)
     )
 
 
-def show_kpis(data, metric, period):
-    metric_col = get_metric_column(metric, period)
-    total_events = data[metric_col].fillna(0).sum()
-    total_airlines = data["airline"].nunique()
-    exposure = data["avail_seat_km_per_week"].fillna(0).sum()
-    average_events = (
-        data[metric_col].fillna(0).mean() if len(data) else 0
-    )
-
-    k1, k2, k3, k4 = st.columns(4, gap="medium")
-
-    with k1:
-        st.metric("Airlines", format_number(total_airlines))
-
-    with k2:
-        st.metric(f"Total {metric.lower()}", format_number(total_events))
-
-    with k3:
-        st.metric("Average per airline", format_number(average_events))
-
-    with k4:
-        st.metric("Seat-km exposure", format_number(exposure))
-
-
-# --------------------------------------------------
-# LEFT NAVIGATION
-# --------------------------------------------------
-with st.sidebar:
-    st.markdown(
-        """
-        <div class="brand">✈ AeroInsight</div>
-        <div class="brand-subtitle">
-            AIRLINE SAFETY ANALYTICS
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("### Navigation")
-
-    page = st.radio(
-        "Choose a page",
-        [
-            "Overview",
-            "Period Comparison",
-            "Exposure Analysis",
-            "Data Explorer",
-        ],
-        label_visibility="collapsed",
-    )
-
-    st.divider()
-
-    st.markdown("### Dashboard Filters")
-
-    period = st.selectbox(
-        "Analysis period",
-        ["2000–2014", "1985–1999"],
-        help="Select the historical period for the main charts.",
-    )
-
-    metric = st.selectbox(
-        "Safety metric",
-        ["Incidents", "Fatal accidents", "Fatalities"],
-    )
-
-    search_text = st.text_input(
-        "Search airline",
-        placeholder="Type an airline name...",
-    )
-
-    airline_options = sorted(df["airline"].unique().tolist())
-
-    selected_airlines = st.multiselect(
-        "Select airlines",
-        options=airline_options,
-        default=[],
-        help="Leave empty to include all matching airlines.",
-    )
-
-    top_n = st.slider(
-        "Airlines in ranking charts",
-        min_value=5,
-        max_value=min(30, max(5, len(airline_options))),
-        value=min(10, max(5, len(airline_options))),
-        step=1,
-    )
-
-    if st.button("Reset filters", use_container_width=True):
-        st.session_state["Analysis period"] = "2000–2014"
-        st.session_state["Safety metric"] = "Incidents"
-        st.session_state["Search airline"] = ""
-        st.session_state["Select airlines"] = []
-        st.rerun()
-
-    st.divider()
-
-    st.caption("DATASET")
-    st.markdown("Airline Safety · 1985–2014")
-    st.caption(f"{len(df)} airline records loaded")
-
-
-# --------------------------------------------------
-# APPLY FILTERS
-# --------------------------------------------------
-filtered = df.copy()
-
-if search_text.strip():
-    filtered = filtered[
-        filtered["airline"].str.contains(
-            search_text.strip(),
-            case=False,
-            na=False,
-        )
-    ]
-
-if selected_airlines:
-    filtered = filtered[
-        filtered["airline"].isin(selected_airlines)
-    ]
-
-if filtered.empty:
-    show_header("No matching airlines", "Adjust the filters in the left sidebar.")
-    st.warning("No records match the current filters.")
-    st.stop()
-
-
-metric_col = get_metric_column(metric, period)
-old_col, new_col = METRICS[metric]
-
-
-# --------------------------------------------------
-# PAGE 1: OVERVIEW
-# --------------------------------------------------
-if page == "Overview":
-    show_header(
-        "Airline Safety Overview",
-        "A clear summary of historical airline safety statistics.",
-    )
-
-    st.markdown(
-        f"""
-        <div class="info-note">
-        <b>Current view:</b> {period} &nbsp; | &nbsp;
-        <b>Metric:</b> {metric} &nbsp; | &nbsp;
-        <b>Airlines:</b> {len(filtered)}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    show_kpis(filtered, metric, period)
-
-    st.markdown('<div class="section-heading">Safety Rankings</div>',
-                unsafe_allow_html=True)
-
-    ranking = (
-        filtered.groupby("airline", as_index=False)[metric_col]
-        .sum()
-        .sort_values(metric_col, ascending=False)
-        .head(top_n)
-        .sort_values(metric_col, ascending=True)
-    )
-
-    chart1, chart2 = st.columns([1.6, 1], gap="large")
-
-    with chart1:
-        fig = px.bar(
-            ranking,
-            x=metric_col,
-            y="airline",
-            orientation="h",
-            title=f"Top Airlines by {metric.lower()}",
-            labels={
-                metric_col: metric,
-                "airline": "Airline",
-            },
-            color=metric_col,
-            color_continuous_scale=["#B9D9F5", "#3977D5", "#142B4A"],
-        )
-        fig.update_layout(coloraxis_showscale=False)
-        st.plotly_chart(
-            style_chart(fig, 440),
-            use_container_width=True,
-            config={"responsive": True, "displaylogo": False},
-        )
-
-    with chart2:
-        composition = (
-            filtered[metric_col].fillna(0).clip(lower=0)
-        )
-        pie_df = pd.DataFrame({
-            "Category": ["Selected airlines", "Remaining total"],
-            "Value": [
-                composition.sum(),
-                max(0, df[metric_col].fillna(0).sum() - composition.sum()),
-            ],
-        })
-
-        if pie_df["Value"].sum() == 0:
-            st.info("No events are recorded for this metric.")
-        else:
-            fig = px.pie(
-                pie_df,
-                names="Category",
-                values="Value",
-                hole=0.65,
-                title="Filtered vs. full dataset",
-                color="Category",
-                color_discrete_map={
-                    "Selected airlines": COLORS["teal"],
-                    "Remaining total": "#DCE5F0",
-                },
-            )
-            fig.update_traces(
-                textposition="inside",
-                textinfo="percent",
-                hovertemplate="%{label}<br>%{value:,.0f}<extra></extra>",
-            )
-            st.plotly_chart(
-                style_chart(fig, 440),
-                use_container_width=True,
-                config={"responsive": True, "displaylogo": False},
-            )
-
-    st.markdown(
-        '<div class="section-heading">Metric Breakdown</div>',
-        unsafe_allow_html=True,
-    )
-
-    totals = pd.DataFrame({
-        "Metric": list(METRICS.keys()),
-        "Total": [
-            filtered[get_metric_column(name, period)]
-            .fillna(0).sum()
-            for name in METRICS
-        ],
-    })
-
-    fig = px.bar(
-        totals,
-        x="Metric",
-        y="Total",
-        title=f"All safety metrics · {period}",
-        color="Metric",
-        color_discrete_sequence=[
-            COLORS["blue"], COLORS["amber"], COLORS["red"]
-        ],
-        text_auto=True,
-    )
-    fig.update_layout(showlegend=False)
-    st.plotly_chart(
-        style_chart(fig, 320),
-        use_container_width=True,
-        config={"responsive": True, "displaylogo": False},
+def show_empty_state():
+    st.warning(
+        "No responses match your current filters. "
+        "Adjust the filters in the left sidebar."
     )
 
 
-# --------------------------------------------------
-# PAGE 2: PERIOD COMPARISON
-# --------------------------------------------------
-elif page == "Period Comparison":
-    show_header(
-        "Period Comparison",
-        "Compare airline safety statistics across two historical periods.",
-    )
-
-    st.markdown(
-        '<div class="info-note">Compare recorded events from '
-        '<b>1985–1999</b> and <b>2000–2014</b>. These are historical '
-        'totals, not risk-adjusted rates.</div>',
-        unsafe_allow_html=True,
-    )
-
-    show_kpis(filtered, metric, period)
-
-    st.markdown(
-        '<div class="section-heading">Compare the selected metric</div>',
-        unsafe_allow_html=True,
-    )
-
-    comparison = filtered[["airline", old_col, new_col]].copy()
-    comparison[[old_col, new_col]] = comparison[
-        [old_col, new_col]
-    ].fillna(0)
-
-    comparison["Total"] = comparison[old_col] + comparison[new_col]
-    comparison = (
-        comparison.sort_values("Total", ascending=False)
-        .head(top_n)
-        .drop(columns="Total")
-    )
-
-    comparison_long = comparison.melt(
-        id_vars="airline",
-        value_vars=[old_col, new_col],
-        var_name="Period",
-        value_name=metric,
-    )
-
-    comparison_long["Period"] = comparison_long["Period"].map({
-        old_col: "1985–1999",
-        new_col: "2000–2014",
-    })
-
-    fig = px.bar(
-        comparison_long,
-        x="airline",
-        y=metric,
-        color="Period",
-        barmode="group",
-        title=f"{metric} by airline and period",
-        labels={"airline": "Airline"},
-        color_discrete_map={
-            "1985–1999": COLORS["blue"],
-            "2000–2014": COLORS["teal"],
-        },
-    )
-    fig.update_layout(xaxis_tickangle=-35)
-    st.plotly_chart(
-        style_chart(fig, 470),
-        use_container_width=True,
-        config={"responsive": True, "displaylogo": False},
-    )
-
-    old_total = filtered[old_col].fillna(0).sum()
-    new_total = filtered[new_col].fillna(0).sum()
-
-    left, right = st.columns(2, gap="large")
-
-    with left:
-        st.metric("1985–1999 total", format_number(old_total))
-
-    with right:
-        st.metric("2000–2014 total", format_number(new_total))
-
-    st.markdown(
-        '<div class="section-heading">Detailed Comparison</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.dataframe(
-        comparison.rename(columns={
-            old_col: "1985–1999",
-            new_col: "2000–2014",
-            "airline": "Airline",
-        }),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-
-# --------------------------------------------------
-# PAGE 3: EXPOSURE ANALYSIS
-# --------------------------------------------------
-elif page == "Exposure Analysis":
-    show_header(
-        "Exposure Analysis",
-        "Explore recorded safety events alongside airline operating exposure.",
-    )
-
-    st.markdown(
-        '<div class="info-note">Available seat-kilometres provide an '
-        'exposure measure. This dashboard does not calculate a formal '
-        'causal or standardized safety rate.</div>',
-        unsafe_allow_html=True,
-    )
-
-    show_kpis(filtered, metric, period)
-
-    exposure_data = filtered[
-        ["airline", "avail_seat_km_per_week", metric_col]
-    ].copy()
-
-    exposure_data = exposure_data.rename(columns={
-        "avail_seat_km_per_week": "Available seat-km per week",
-        metric_col: metric,
-    }).dropna()
-
-    chart1, chart2 = st.columns(2, gap="large")
-
-    with chart1:
-        fig = px.scatter(
-            exposure_data,
-            x="Available seat-km per week",
-            y=metric,
-            hover_name="airline",
-            size="Available seat-km per week",
-            color=metric,
-            title=f"Exposure vs. {metric.lower()}",
-            color_continuous_scale=["#A9DCD7", "#13A89E", "#142B4A"],
-        )
-        fig.update_layout(coloraxis_showscale=False)
-        st.plotly_chart(
-            style_chart(fig, 410),
-            use_container_width=True,
-            config={"responsive": True, "displaylogo": False},
-        )
-
-    with chart2:
-        fig = px.histogram(
-            exposure_data,
-            x=metric,
-            nbins=15,
-            title=f"Distribution of {metric.lower()}",
-            labels={metric: metric},
-            color_discrete_sequence=[COLORS["blue"]],
-        )
-        st.plotly_chart(
-            style_chart(fig, 410),
-            use_container_width=True,
-            config={"responsive": True, "displaylogo": False},
-        )
-
-    st.markdown(
-        '<div class="section-heading">Exposure Data</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.dataframe(
-        exposure_data.sort_values(metric, ascending=False),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-
-# --------------------------------------------------
-# PAGE 4: DATA EXPLORER
-# --------------------------------------------------
-elif page == "Data Explorer":
-    show_header(
-        "Data Explorer",
-        "Inspect, sort, and export the airline safety dataset.",
-    )
-
-    st.markdown(
-        '<div class="info-note">Use the sidebar to narrow the records. '
-        'The table and CSV export below reflect your selected airlines '
-        'and search term.</div>',
-        unsafe_allow_html=True,
-    )
-
-    k1, k2, k3 = st.columns(3, gap="medium")
-
-    with k1:
-        st.metric("Visible records", format_number(len(filtered)))
-
-    with k2:
-        st.metric("Unique airlines", format_number(filtered["airline"].nunique()))
-
-    with k3:
-        missing_count = int(filtered.isna().sum().sum())
-        st.metric("Missing values", format_number(missing_count))
-
-    st.markdown(
-        '<div class="section-heading">Airline Records</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.dataframe(
-        filtered,
-        use_container_width=True,
-        hide_index=True,
-        height=460,
-    )
-
-    csv_data = filtered.to_csv(index=False).encode("utf-8")
-
+def download_csv(data, filename="poll_responses.csv"):
     st.download_button(
-        label="⬇ Download filtered data (CSV)",
-        data=csv_data,
-        file_name="airline_safety_filtered.csv",
+        "⬇️  Download CSV",
+        data=data.to_csv(index=False).encode("utf-8"),
+        file_name=filename,
         mime="text/csv",
         use_container_width=True,
     )
 
-    with st.expander("Dataset information"):
-        st.write("**Dataset:** Airline Safety")
-        st.write(f"**Original rows loaded:** {len(df)}")
-        st.write(f"**Rows currently displayed:** {len(filtered)}")
-        st.write("**Columns:**")
-        st.write(", ".join(filtered.columns.tolist()))
-        st.write(
-            "**Note:** Missing numeric values are ignored in totals "
-            "and omitted from exposure charts where required."
+
+def render_kpis(data):
+    total = len(data)
+    respondents = data["Respondent ID"].nunique()
+    options = data["Option"].nunique()
+    regions = data["Region"].nunique()
+
+    c1, c2, c3, c4 = st.columns(4, gap="medium")
+
+    with c1:
+        render_card("TOTAL RESPONSES", f"{total:,}", "Filtered poll records")
+
+    with c2:
+        render_card("RESPONDENTS", f"{respondents:,}", "Distinct respondent IDs")
+
+    with c3:
+        render_card("ANSWER OPTIONS", f"{options:,}", "Options represented")
+
+    with c4:
+        render_card("REGIONS", f"{regions:,}", "Regions represented")
+
+
+# =========================================================
+# PAGE 1: OVERVIEW
+# =========================================================
+if page == "🏠  Overview":
+    render_header(
+        "Poll Analytics Overview",
+        "Your central workspace for understanding poll preferences and response patterns.",
+    )
+
+    if filtered.empty:
+        show_empty_state()
+    else:
+        render_kpis(filtered)
+
+        render_section(
+            "Response Overview",
+            "Explore the most popular options and the distribution of responses.",
+        )
+
+        counts = get_option_counts(filtered)
+
+        left, right = st.columns(2, gap="large")
+
+        with left:
+            fig = px.bar(
+                counts,
+                x="Option",
+                y="Votes",
+                color="Option",
+                color_discrete_sequence=COLORS,
+                text="Votes",
+                title="Votes by Answer Option",
+            )
+
+            fig.update_layout(showlegend=False)
+            fig.update_traces(
+                textposition="outside",
+                cliponaxis=False,
+            )
+
+            st.plotly_chart(
+                prepare_chart(fig, 390),
+                use_container_width=True,
+            )
+
+        with right:
+            fig = px.pie(
+                counts,
+                names="Option",
+                values="Votes",
+                hole=0.55,
+                color_discrete_sequence=COLORS,
+                title="Response Share",
+            )
+
+            fig.update_traces(
+                textposition="inside",
+                textinfo="percent",
+            )
+
+            st.plotly_chart(
+                prepare_chart(fig, 390),
+                use_container_width=True,
+            )
+
+        render_section(
+            "Audience Distribution",
+            "Compare the number of responses across demographics.",
+        )
+
+        left, right = st.columns(2, gap="large")
+
+        with left:
+            regions = (
+                filtered.groupby("Region", as_index=False)
+                .agg(Responses=("Respondent ID", "count"))
+                .sort_values("Responses", ascending=False)
+            )
+
+            fig = px.bar(
+                regions,
+                x="Region",
+                y="Responses",
+                color="Region",
+                color_discrete_sequence=COLORS,
+                text="Responses",
+                title="Responses by Region",
+            )
+
+            fig.update_layout(showlegend=False)
+            fig.update_traces(
+                textposition="outside",
+                cliponaxis=False,
+            )
+
+            st.plotly_chart(
+                prepare_chart(fig, 350),
+                use_container_width=True,
+            )
+
+        with right:
+            ages = (
+                filtered.groupby("Age Group", as_index=False)
+                .agg(Responses=("Respondent ID", "count"))
+                .sort_values("Responses", ascending=False)
+            )
+
+            fig = px.bar(
+                ages,
+                x="Age Group",
+                y="Responses",
+                color="Age Group",
+                color_discrete_sequence=COLORS,
+                text="Responses",
+                title="Responses by Age Group",
+            )
+
+            fig.update_layout(showlegend=False)
+            fig.update_traces(
+                textposition="outside",
+                cliponaxis=False,
+            )
+
+            st.plotly_chart(
+                prepare_chart(fig, 350),
+                use_container_width=True,
+            )
+
+        render_section("Recent Responses")
+
+        recent = filtered.sort_values(
+            "Timestamp",
+            ascending=False,
+            na_position="last",
+        ).head(10)
+
+        st.dataframe(
+            recent,
+            hide_index=True,
+            use_container_width=True,
         )
 
 
-# --------------------------------------------------
+# =========================================================
+# PAGE 2: POLL RESULTS
+# =========================================================
+elif page == "📊  Poll Results":
+    render_header(
+        "Poll Results",
+        "Compare answer choices and inspect the results of individual questions.",
+    )
+
+    if filtered.empty:
+        show_empty_state()
+    else:
+        questions = sorted(filtered["Question"].unique().tolist())
+
+        question = st.selectbox(
+            "Select a poll question",
+            questions,
+            key="results_question",
+        )
+
+        question_data = filtered[
+            filtered["Question"] == question
+        ]
+
+        counts = get_option_counts(question_data)
+
+        if counts.empty:
+            show_empty_state()
+        else:
+            total = int(counts["Votes"].sum())
+            winner = counts.iloc[0]
+
+            share = (
+                float(winner["Votes"]) / total * 100
+                if total else 0
+            )
+
+            c1, c2, c3 = st.columns(3, gap="medium")
+
+            with c1:
+                render_card(
+                    "QUESTION RESPONSES",
+                    f"{total:,}",
+                    "Responses to this question",
+                )
+
+            with c2:
+                render_card(
+                    "TOP ANSWER",
+                    str(winner["Option"]),
+                    "Most selected option",
+                )
+
+            with c3:
+                render_card(
+                    "TOP ANSWER SHARE",
+                    f"{share:.1f}%",
+                    "Share of question responses",
+                )
+
+            render_section(
+                "Vote Analysis",
+                "Review answer counts and their percentage distribution.",
+            )
+
+            left, right = st.columns(2, gap="large")
+
+            with left:
+                fig = px.bar(
+                    counts,
+                    x="Option",
+                    y="Votes",
+                    color="Option",
+                    color_discrete_sequence=COLORS,
+                    text="Votes",
+                    title="Vote Count by Option",
+                )
+
+                fig.update_layout(showlegend=False)
+                fig.update_traces(
+                    textposition="outside",
+                    cliponaxis=False,
+                )
+
+                st.plotly_chart(
+                    prepare_chart(fig, 400),
+                    use_container_width=True,
+                )
+
+            with right:
+                fig = px.pie(
+                    counts,
+                    names="Option",
+                    values="Votes",
+                    hole=0.5,
+                    color_discrete_sequence=COLORS,
+                    title="Share by Answer",
+                )
+
+                fig.update_traces(
+                    textposition="inside",
+                    textinfo="label+percent",
+                )
+
+                st.plotly_chart(
+                    prepare_chart(fig, 400),
+                    use_container_width=True,
+                )
+
+            render_section("Detailed Results")
+
+            result_table = counts.copy()
+            result_table["Share (%)"] = (
+                result_table["Votes"] / total * 100
+            ).round(2)
+
+            st.dataframe(
+                result_table,
+                hide_index=True,
+                use_container_width=True,
+            )
+
+            download_csv(
+                question_data,
+                "poll_question_results.csv",
+            )
+
+
+# =========================================================
+# PAGE 3: AUDIENCE INSIGHTS
+# =========================================================
+elif page == "🌍  Audience Insights":
+    render_header(
+        "Audience Insights",
+        "Understand how poll preferences differ across regions and age groups.",
+    )
+
+    if filtered.empty:
+        show_empty_state()
+    else:
+        render_section(
+            "Regional Preferences",
+            "Compare answer options within each region.",
+        )
+
+        region_cross = pd.crosstab(
+            filtered["Region"],
+            filtered["Option"],
+        ).reset_index()
+
+        region_long = region_cross.melt(
+            id_vars="Region",
+            var_name="Option",
+            value_name="Responses",
+        )
+
+        fig = px.bar(
+            region_long,
+            x="Region",
+            y="Responses",
+            color="Option",
+            barmode="group",
+            color_discrete_sequence=COLORS,
+            title="Answer Preferences by Region",
+        )
+
+        st.plotly_chart(
+            prepare_chart(fig, 430),
+            use_container_width=True,
+        )
+
+        render_section(
+            "Age Group Preferences",
+            "See which answer options are selected across age groups.",
+        )
+
+        age_cross = pd.crosstab(
+            filtered["Age Group"],
+            filtered["Option"],
+        ).reset_index()
+
+        age_long = age_cross.melt(
+            id_vars="Age Group",
+            var_name="Option",
+            value_name="Responses",
+        )
+
+        fig = px.bar(
+            age_long,
+            x="Age Group",
+            y="Responses",
+            color="Option",
+            barmode="group",
+            color_discrete_sequence=COLORS,
+            title="Answer Preferences by Age Group",
+        )
+
+        st.plotly_chart(
+            prepare_chart(fig, 430),
+            use_container_width=True,
+        )
+
+        render_section("Audience Summary")
+
+        left, right = st.columns(2, gap="large")
+
+        with left:
+            region_summary = (
+                filtered.groupby("Region", as_index=False)
+                .agg(Responses=("Respondent ID", "count"))
+                .sort_values("Responses", ascending=False)
+            )
+
+            st.markdown("**Responses by region**")
+
+            st.dataframe(
+                region_summary,
+                hide_index=True,
+                use_container_width=True,
+            )
+
+        with right:
+            age_summary = (
+                filtered.groupby("Age Group", as_index=False)
+                .agg(Responses=("Respondent ID", "count"))
+                .sort_values("Responses", ascending=False)
+            )
+
+            st.markdown("**Responses by age group**")
+
+            st.dataframe(
+                age_summary,
+                hide_index=True,
+                use_container_width=True,
+            )
+
+
+# =========================================================
+# PAGE 4: RESPONSE TRENDS
+# =========================================================
+elif page == "📈  Trends":
+    render_header(
+        "Response Trends",
+        "Explore response activity over time and discover patterns in poll participation.",
+    )
+
+    dated = filtered.dropna(subset=["Timestamp"]).copy()
+
+    if dated.empty:
+        st.warning(
+            "No valid timestamps match your current filters."
+        )
+    else:
+        interval = st.selectbox(
+            "Group responses by",
+            ["Daily", "Weekly", "Monthly"],
+            index=2,
+        )
+
+        period_map = {
+            "Daily": "D",
+            "Weekly": "W",
+            "Monthly": "M",
+        }
+
+        dated["Period"] = (
+            dated["Timestamp"]
+            .dt.to_period(period_map[interval])
+            .dt.start_time
+        )
+
+        trend = (
+            dated.groupby("Period", as_index=False)
+            .agg(Responses=("Respondent ID", "count"))
+        )
+
+        render_section("Response Volume")
+
+        fig = px.line(
+            trend,
+            x="Period",
+            y="Responses",
+            markers=True,
+            title=f"Responses Over Time — {interval}",
+            color_discrete_sequence=[COLORS[0]],
+        )
+
+        fig.update_traces(
+            line_width=3,
+            marker_size=7,
+        )
+
+        st.plotly_chart(
+            prepare_chart(fig, 430),
+            use_container_width=True,
+        )
+
+        render_section("Response Trends by Answer")
+
+        trend_options = (
+            dated.groupby(["Period", "Option"], as_index=False)
+            .agg(Responses=("Respondent ID", "count"))
+        )
+
+        fig = px.bar(
+            trend_options,
+            x="Period",
+            y="Responses",
+            color="Option",
+            barmode="stack",
+            color_discrete_sequence=COLORS,
+            title="Response Volume by Answer Option",
+        )
+
+        st.plotly_chart(
+            prepare_chart(fig, 430),
+            use_container_width=True,
+        )
+
+        render_section("Time Series Data")
+
+        st.dataframe(
+            trend.sort_values(
+                "Period",
+                ascending=False,
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+
+# =========================================================
+# PAGE 5: RAW DATA
+# =========================================================
+elif page == "🗃️  Raw Data":
+    render_header(
+        "Poll Data Explorer",
+        "Search, inspect, and export the original poll response records.",
+    )
+
+    c1, c2, c3 = st.columns(3, gap="medium")
+
+    with c1:
+        render_card(
+            "SOURCE RECORDS",
+            f"{len(df):,}",
+            "Rows in the original dataset",
+        )
+
+    with c2:
+        render_card(
+            "FILTERED RECORDS",
+            f"{len(filtered):,}",
+            "Rows matching sidebar filters",
+        )
+
+    with c3:
+        render_card(
+            "DATA FIELDS",
+            f"{len(df.columns):,}",
+            "Available columns",
+        )
+
+    render_section(
+        "Search and Explore",
+        "Search within the filtered data, then download the matching records.",
+    )
+
+    search = st.text_input(
+        "Search records",
+        placeholder="Enter a respondent ID, option, question, region or age group...",
+    )
+
+    display_data = filtered.copy()
+
+    if search.strip():
+        match_mask = display_data.astype(str).apply(
+            lambda column: column.str.contains(
+                search.strip(),
+                case=False,
+                regex=False,
+                na=False,
+            )
+        ).any(axis=1)
+
+        display_data = display_data[match_mask]
+
+    st.caption(f"{len(display_data):,} records displayed")
+
+    st.dataframe(
+        display_data,
+        hide_index=True,
+        use_container_width=True,
+        height=460,
+    )
+
+    download_csv(
+        display_data,
+        "filtered_poll_responses.csv",
+    )
+
+    with st.expander("View data quality report"):
+        quality = pd.DataFrame(
+            {
+                "Column": df.columns,
+                "Data Type": [
+                    str(df[column].dtype)
+                    for column in df.columns
+                ],
+                "Missing Values": [
+                    int(df[column].isna().sum())
+                    for column in df.columns
+                ],
+                "Unique Values": [
+                    int(df[column].nunique(dropna=True))
+                    for column in df.columns
+                ],
+            }
+        )
+
+        st.dataframe(
+            quality,
+            hide_index=True,
+            use_container_width=True,
+        )
+
+# =========================================================
 # FOOTER
-# --------------------------------------------------
+# =========================================================
 st.markdown(
     """
     <div class="footer">
-        AeroInsight · Airline Safety Analytics<br>
-        Historical data for analysis and educational use.
-        Historical event counts alone do not establish which airline
-        is safest today.
+        PollInsights · Poll Results Visualization · Built with Streamlit and Plotly
     </div>
     """,
     unsafe_allow_html=True,
